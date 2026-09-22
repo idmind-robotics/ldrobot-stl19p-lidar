@@ -1,5 +1,5 @@
 # ldrobot-lidar 
-
+IDMIND
 This is a ROS2 package based on the official package from LDRobot:
 ```bash
 git@github.com:ldrobotSensorTeam/ldlidar_ros2.git
