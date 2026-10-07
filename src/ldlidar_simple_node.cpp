@@ -262,7 +262,16 @@ private:
         }
 
         if (setting.enable_angle_crop_func) { // Angle crop setting, Mask data within the set angle range
-          if ((dir_angle >= setting.angle_crop_min) && (dir_angle <= setting.angle_crop_max)) {
+          // Crop in published-scan angles (the raw angle is mirrored when laser_scan_dir is set).
+          // angle_crop_min > angle_crop_max masks a range that wraps through 0/360 degrees.
+          float scan_angle = setting.laser_scan_dir ? 360.f - dir_angle : dir_angle;
+          if (scan_angle >= 360.f) {
+            scan_angle -= 360.f;
+          }
+          bool in_crop = (setting.angle_crop_min <= setting.angle_crop_max)
+            ? ((scan_angle >= setting.angle_crop_min) && (scan_angle <= setting.angle_crop_max))
+            : ((scan_angle >= setting.angle_crop_min) || (scan_angle <= setting.angle_crop_max));
+          if (in_crop) {
             range = std::numeric_limits<float>::quiet_NaN();
             intensity = std::numeric_limits<float>::quiet_NaN();
           }
