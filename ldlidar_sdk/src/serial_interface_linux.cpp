@@ -103,15 +103,18 @@ bool SerialInterfaceLinux::Close() {
 
   rx_thread_exit_flag_ = true;
 
-  if (com_handle_ != -1) {
-    close(com_handle_);
-    com_handle_ = -1;
-  }
-
+  // Join the receive thread before closing the port: it reads com_handle_ (FD_SET, pselect,
+  // read) every 100 ms, and FD_SET(-1) on a closed handle aborts the node under glibc's
+  // fortify check ("*** buffer overflow detected ***") when it is stopped.
   if ((rx_thread_ != nullptr) && rx_thread_->joinable()) {
     rx_thread_->join();
     delete rx_thread_;
     rx_thread_ = nullptr;
+  }
+
+  if (com_handle_ != -1) {
+    close(com_handle_);
+    com_handle_ = -1;
   }
 
   is_cmd_opened_ = false;

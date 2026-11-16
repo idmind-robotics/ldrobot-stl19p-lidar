@@ -84,17 +84,20 @@ bool CmdInterfaceLinux::Close()
 
     mRxThreadExitFlag = true;
 
-    if (mComHandle != -1)
-    {
-        close(mComHandle);
-        mComHandle = -1;
-    }
-
+    // Join the receive thread before closing the port: it reads mComHandle (FD_SET, pselect,
+    // read) every 100 ms, and FD_SET(-1) on a closed handle aborts the node under glibc's
+    // fortify check ("*** buffer overflow detected ***") when it is stopped.
     if ((mRxThread!=nullptr) && mRxThread->joinable())
     {
         mRxThread->join();
         delete mRxThread;
         mRxThread = NULL;
+    }
+
+    if (mComHandle != -1)
+    {
+        close(mComHandle);
+        mComHandle = -1;
     }
 
     mIsCmdOpened = false;
